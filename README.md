@@ -130,17 +130,31 @@ EOF
 ```
 
 ```
+cat <<EOF > ops-files/cloud-config-master-lb.yml
+- type: replace
+  path: /vm_extensions?/-
+  value:
+    name: master-lb
+    cloud_properties:
+      elbs:
+      - ((master_target_pool))
+EOF
+```
+
+```
 cat <<'EOF' > update-cloud-config.sh
 #!/bin/bash
 bosh update-cloud-config kubo-deployment/configurations/aws/cloud-config.yml \
     -o ops-files/cloud-config-small-vm-types.yml \
+    -o ops-files/cloud-config-master-lb.yml \
     -v az=${zone} \
     -v master_iam_instance_profile=${prefix}-cfcr-master \
     -v worker_iam_instance_profile=${prefix}-cfcr-worker \
     -v internal_cidr=${private_subnet_ip_prefix}.0/24 \
     -v internal_gw=${private_subnet_ip_prefix}.1 \
     -v dns_recursor_ip=${private_subnet_ip_prefix}.1 \
-    -v subnet_id=${private_subnet_id}
+    -v subnet_id=${private_subnet_id} \
+    -v master_target_pool=${prefix}-cfcr-api
 EOF
 chmod +x update-cloud-config.sh
 ```
@@ -170,7 +184,11 @@ EOF
 ```
 
 ```
-cat <<EOF > ops-files/kubernetes-master-lb-san.yml
+cat <<EOF > ops-files/kubernetes-master-lb.yml
+- type: replace
+  path: /instance_groups/name=master/vm_extensions?/-
+  value: master-lb
+
 - type: replace
   path: /variables/name=tls-kubernetes/options/alternative_names/-
   value: ((kubernetes_master_host))
@@ -207,7 +225,7 @@ bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/cloud-provider.yml \
     -o ops-files/kubernetes-kubo-0.16.0.yml \
     -o ops-files/kubernetes-single-worker.yml \
-    -o ops-files/kubernetes-master-lb-san.yml \
+    -o ops-files/kubernetes-master-lb.yml \
     --var-file addons-spec=<(for f in `ls specs/*.yml`;do cat $f;echo;echo "---";done) \
     -v kubernetes_cluster_tag=${kubernetes_cluster_tag} \
     -v kubernetes_master_host=${master_lb_ip_address} \

@@ -1,0 +1,6 @@
+terraform.tfvars
+terraform.tfstate*
+.terraform
+plan
+*.pem
+ssh-bastion.sh

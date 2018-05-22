@@ -289,6 +289,7 @@ kubectl config use-context "${context_name}"
 
 ```
 bosh -d cfcr delete-deployment
+bosh -n clean-up --all
 ```
 
 ```

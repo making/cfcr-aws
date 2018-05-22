@@ -15,6 +15,8 @@ terraform plan -out plan
 terraform apply plan
 ```
 
+> TODO: Narrow the scope of `aws_iam_policy.bosh-director` for `iam:PassRole` as [documented](https://docs-cfcr.cfapps.io/installing/aws/deploying-bosh-aws/#step-4-create-iam-user)
+
 ```
 cat terraform.tfstate | jq -r '.modules[0].resources["tls_private_key.deployer"].primary.attributes.private_key_pem' > deployer.pem
 export BASTION_IP=`cat terraform.tfstate | jq -r '.modules[0].outputs["bosh_bastion_ip"].value'`
@@ -176,7 +178,7 @@ EOF
 ```
 
 ```
-cat <<EOF > ops-files/kubernetes-single-worker.yml
+cat <<EOF > ops-files/kubernetes-worker.yml
 - type: replace
   path: /instance_groups/name=worker/instances
   value: 1
@@ -224,7 +226,7 @@ bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/lb.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/cloud-provider.yml \
     -o ops-files/kubernetes-kubo-0.16.0.yml \
-    -o ops-files/kubernetes-single-worker.yml \
+    -o ops-files/kubernetes-worker.yml \
     -o ops-files/kubernetes-master-lb.yml \
     --var-file addons-spec=<(for f in `ls specs/*.yml`;do cat $f;echo;echo "---";done) \
     -v kubernetes_cluster_tag=${kubernetes_cluster_tag} \
@@ -261,12 +263,6 @@ chmod +x credhub-login.sh
 
 ```
 admin_password=$(credhub get -n /bosh-aws/cfcr/kubo-admin-password | bosh int - --path=/value)
-master_host=$(bosh vms -d cfcr | grep master | awk 'NR==1 {print $4}')
-```
-
-```
-sudo sed -i '/master.cfcr.internal/d' /etc/hosts
-echo "${master_host} master.cfcr.internal" | sudo tee -a /etc/hosts
 ```
 
 ```
@@ -280,7 +276,7 @@ user_name="admin"
 context_name="cfcr"
 
 kubectl config set-cluster "${cluster_name}" \
-  --server="https://master.cfcr.internal:8443" \
+  --server="https://${master_lb_ip_address}:8443" \
   --certificate-authority="${tmp_ca_file}" \
   --embed-certs=true
 

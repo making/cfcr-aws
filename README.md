@@ -245,7 +245,7 @@ bosh -d cfcr run-errand apply-addons
 ```
 
 ```
-cat <<EOF > credhub-login.sh
+cat <<'EOF' > credhub-login.sh
 #!/bin/bash
 credhub login \
         -s ${BOSH_ENVIRONMENT}:8844 \

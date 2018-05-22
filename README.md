@@ -272,7 +272,7 @@ credhub get -n /bosh-aws/cfcr/tls-kubernetes | bosh int - --path=/value/ca > "${
 
 ```
 cluster_name="cfcr-aws"
-user_name="admin"
+user_name="admin-aws"
 context_name="cfcr-aws"
 
 kubectl config set-cluster "${cluster_name}" \

@@ -1,4 +1,4 @@
-```
+```bash
 cd terraform
 
 cat <<EOF > terraform.tfvars
@@ -8,14 +8,14 @@ secret_key         = "foobar"
 region             = "ap-northeast-1"
 zone               = "ap-northeast-1a"
 vpc_cidr           = "10.0.0.0/16"
-ROF
+EOF
 
 terraform init
 terraform plan -out plan
 terraform apply plan
 ```
 
-```
+```bash
 cat terraform.tfstate | jq -r '.modules[0].resources["tls_private_key.deployer"].primary.attributes.private_key_pem' > deployer.pem
 chmod 600 deployer.pem
 export BASTION_IP=`cat terraform.tfstate | jq -r '.modules[0].outputs["bosh_bastion_ip"].value'`
@@ -24,11 +24,11 @@ echo "ssh -o StrictHostKeyChecking=no -i $(pwd)/deployer.pem ubuntu@${BASTION_IP
 chmod +x ssh-bastion.sh
 ```
 
-```
+```bash
 ./ssh-bastion.sh
 ```
 
-```
+```bash
 mkdir cfcr-manifests
 cd cfcr-manifests
 git init
@@ -41,11 +41,11 @@ git add -A
 git commit -m "import CFCR v0.16.0"
 ```
 
-```
+```bash
 mkdir -p ops-files
 ```
 
-```
+```yaml
 cat <<EOF > ops-files/director-size-aws.yml
 - type: replace
   path: /resource_pools/name=vms/cloud_properties/instance_type
@@ -53,7 +53,7 @@ cat <<EOF > ops-files/director-size-aws.yml
 EOF
 ```
 
-```
+```bash
 cat <<'EOF' > deploy-bosh.sh
 #!/bin/bash
 bosh create-env bosh-deployment/bosh.yml \
@@ -84,11 +84,11 @@ EOF
 chmod +x deploy-bosh.sh
 ```
 
-```
+```bash
 ./deploy-bosh.sh
 ```
 
-```
+```bash
 cat <<'EOF' > bosh-aws-env.sh
 export BOSH_CLIENT=admin  
 export BOSH_CLIENT_SECRET=$(bosh int ./bosh-aws-creds.yml --path /admin_password)
@@ -98,7 +98,7 @@ EOF
 chmod +x bosh-aws-env.sh
 ```
 
-```
+```bash
 source bosh-aws-env.sh
 ```
 
@@ -107,7 +107,7 @@ STEMCELL_VERSION=$(bosh int kubo-deployment/manifests/cfcr.yml --path /stemcells
 bosh upload-stemcell https://s3.amazonaws.com/bosh-aws-light-stemcells/light-bosh-stemcell-${STEMCELL_VERSION}-aws-xen-hvm-ubuntu-trusty-go_agent.tgz
 ```
 
-```
+```yaml
 cat <<EOF > ops-files/cloud-config-small-vm-types.yml
 - type: replace
   path: /vm_types/name=minimal/cloud_properties/instance_type
@@ -130,7 +130,7 @@ cat <<EOF > ops-files/cloud-config-small-vm-types.yml
 EOF
 ```
 
-```
+```yaml
 cat <<EOF > ops-files/cloud-config-master-lb.yml
 - type: replace
   path: /vm_extensions?/-
@@ -142,7 +142,7 @@ cat <<EOF > ops-files/cloud-config-master-lb.yml
 EOF
 ```
 
-```
+```bash
 cat <<'EOF' > update-cloud-config.sh
 #!/bin/bash
 bosh update-cloud-config kubo-deployment/configurations/aws/cloud-config.yml \
@@ -160,11 +160,11 @@ EOF
 chmod +x update-cloud-config.sh
 ```
 
-```
+```bash
 ./update-cloud-config.sh
 ```
 
-```
+```yaml
 cat <<EOF > ops-files/kubernetes-kubo-0.16.0.yml
 - type: replace
   path: /releases/name=kubo?
@@ -176,7 +176,7 @@ cat <<EOF > ops-files/kubernetes-kubo-0.16.0.yml
 EOF
 ```
 
-```
+```yaml
 cat <<EOF > ops-files/kubernetes-worker.yml
 - type: replace
   path: /instance_groups/name=worker/instances
@@ -184,7 +184,7 @@ cat <<EOF > ops-files/kubernetes-worker.yml
 EOF
 ```
 
-```
+```yaml
 cat <<EOF > ops-files/kubernetes-master-lb.yml
 - type: replace
   path: /instance_groups/name=master/vm_extensions?/-
@@ -196,11 +196,11 @@ cat <<EOF > ops-files/kubernetes-master-lb.yml
 EOF
 ```
 
-```
+```bash
 mkdir -p specs
 ```
 
-```
+```yaml
 cat <<EOF > specs/aws-storage-class.yml
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -217,7 +217,7 @@ parameters:
 EOF
 ```
 
-```
+```bash
 cat <<'EOF' > deploy-kubernetes.sh
 #!/bin/bash
 bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
@@ -235,15 +235,15 @@ EOF
 chmod +x deploy-kubernetes.sh
 ```
 
-```
+```bash
 ./deploy-kubernetes.sh
 ```
 
-```
+```bash
 bosh -d cfcr run-errand apply-addons
 ```
 
-```
+```bash
 cat <<'EOF' > credhub-login.sh
 #!/bin/bash
 credhub login \
@@ -256,20 +256,20 @@ EOF
 chmod +x credhub-login.sh
 ```
 
-```
+```bash
 ./credhub-login.sh
 ```
 
-```
+```bash
 admin_password=$(credhub get -n /bosh-aws/cfcr/kubo-admin-password | bosh int - --path=/value)
 ```
 
-```
+```bash
 tmp_ca_file="$(mktemp)"
 credhub get -n /bosh-aws/cfcr/tls-kubernetes | bosh int - --path=/value/ca > "${tmp_ca_file}"
 ```
 
-```
+```bash
 cluster_name="cfcr-aws"
 user_name="admin-aws"
 context_name="cfcr-aws"
@@ -286,15 +286,15 @@ kubectl config set-context "${context_name}" --cluster="${cluster_name}" --user=
 kubectl config use-context "${context_name}"
 ```
 
-```
+```bash
 bosh -d cfcr delete-deployment
 bosh -n clean-up --all
 ```
 
-```
+```bash
 eval "$(sed 's/create-env/delete-env/' deploy-bosh.sh)"
 ```
 
-```
+```bash
 terraform destroy
 ```

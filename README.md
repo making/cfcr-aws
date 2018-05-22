@@ -1,4 +1,4 @@
-## Deloy Cloud Foundry Container Runtime (Kubernetes on BOSH) on AWS
+## How to deploy Cloud Foundry Container Runtime (Kubernetes on BOSH) on AWS
 
 ### Deploy CFCR
 

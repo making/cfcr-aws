@@ -47,7 +47,7 @@ mkdir -p ops-files
 ```
 
 ```
-cat <<EOF > ops-files/director-size-lite.yml
+cat <<EOF > ops-files/director-size-aws.yml
 - type: replace
   path: /resource_pools/name=vms/cloud_properties/instance_type
   value: t2.small
@@ -63,7 +63,7 @@ bosh create-env bosh-deployment/bosh.yml \
     -o bosh-deployment/credhub.yml \
     -o bosh-deployment/jumpbox-user.yml \
     -o bosh-deployment/local-dns.yml \
-    -o ops-files/director-size-lite.yml \
+    -o ops-files/director-size-aws.yml \
     -o kubo-deployment/configurations/generic/dns-addresses.yml \
     -o kubo-deployment/configurations/generic/bosh-admin-client.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/bosh/tags.yml \

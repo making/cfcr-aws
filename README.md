@@ -9,7 +9,7 @@ Also changed Terraform template to get rid of manual operations by hands.
 
 First we will pave the AWS environment required for BOSH and Kubernete. We will use Terraform here.
 
-Please obtain [customized Terraform template]((https://github.com/making/cfcr-aws)).
+Obtain [customized Terraform template]((https://github.com/making/cfcr-aws)).
 
 ```bash
 git clone https://github.com/making/cfcr-aws.git

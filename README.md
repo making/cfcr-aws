@@ -15,10 +15,9 @@ terraform plan -out plan
 terraform apply plan
 ```
 
-> TODO: Narrow the scope of `aws_iam_policy.bosh-director` for `iam:PassRole` as [documented](https://docs-cfcr.cfapps.io/installing/aws/deploying-bosh-aws/#step-4-create-iam-user)
-
 ```
 cat terraform.tfstate | jq -r '.modules[0].resources["tls_private_key.deployer"].primary.attributes.private_key_pem' > deployer.pem
+chmod 600 deployer.pem
 export BASTION_IP=`cat terraform.tfstate | jq -r '.modules[0].outputs["bosh_bastion_ip"].value'`
 
 echo "ssh -o StrictHostKeyChecking=no -i $(pwd)/deployer.pem ubuntu@${BASTION_IP}" > ssh-bastion.sh

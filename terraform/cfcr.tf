@@ -446,11 +446,24 @@ resource "aws_iam_policy" "bosh-director" {
                 "ec2:RegisterImage",
                 "ec2:DeregisterImage",
                 "elasticloadbalancing:*",
-                "sts:DecodeAuthorizationMessage",
-                "iam:PassRole"
+                "sts:DecodeAuthorizationMessage"
             ],
             "Effect": "Allow",
             "Resource": "*"
+        },
+        {
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Effect": "Allow",
+            "Resource": "${aws_iam_role.cfcr-master.arn}"
+        },
+        {
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Effect": "Allow",
+            "Resource": "${aws_iam_role.cfcr-worker.arn}"
         }
     ]
 }

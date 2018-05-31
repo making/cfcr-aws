@@ -518,7 +518,7 @@ CFCR 0.16.0 does not support
 
 These will be supported in the next release (0.17.0).
 
-#### Update CFCR
+### Update CFCR
 
 * [Bump to CFCR 0.17.0](bump-to-v0.17.0.md)
 

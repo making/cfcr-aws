@@ -31,7 +31,7 @@ bosh upload-stemcell https://s3.amazonaws.com/bosh-aws-light-stemcells/light-bos
 
 Create a ops-file for CFCR v0.17.0.
 
-```
+```yaml
 cat <<EOF > ops-files/kubernetes-kubo-0.17.0.yml
 - type: replace
   path: /releases/name=kubo?

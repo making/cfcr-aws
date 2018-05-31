@@ -44,7 +44,7 @@ EOF
 ```
 
 Update `deploy-kubernetes.sh`.
-Note that `ops-files/misc/single-master.yml` is added so that keep the master node sinle.
+Note that `ops-files/misc/single-master.yml` is added to keep the master node single.
 
 ```bash
 cat <<'EOF' > deploy-kubernetes.sh

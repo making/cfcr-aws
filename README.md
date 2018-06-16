@@ -568,6 +568,10 @@ EC2 console will look like following:
 
 ![image](https://user-images.githubusercontent.com/106908/40799521-c1c855c4-6548-11e8-9745-4abadb9680b4.png)
 
+### Enable UAA integration
+
+[Enable UAA](enable-uaa.md)
+
 ### Destroy CFCR
 
 Delete the used environment.

@@ -1,6 +1,6 @@
 ## Enable UAA integration
 
-In this section, we wii install [UAA](https://github.com/cloudfoundry/uaa-release) as OpenID Connect Provider and integrate with Kubernetes. 
+In this section, we will install [UAA](https://github.com/cloudfoundry/uaa-release) as a OpenID Connect Provider and integrate with Kubernetes. 
 
 Login to Bastion server.
 
@@ -17,7 +17,7 @@ source bosh-aws-env.sh
 
 ### Install UAA
 
-To reduce IaaS cost, we will colocate UAA server in master nodes.
+To reduce IaaS cost, we will colocate a UAA server in each master node.
 
 ![image](https://user-images.githubusercontent.com/106908/41496786-1454d70e-7183-11e8-88e0-a61d80a12874.png)
 

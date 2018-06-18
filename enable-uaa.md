@@ -332,7 +332,7 @@ kubectl config use-context "${context_name}"
 
 In order to use `groups-claim` in kubernetes's oidc integration, external id provider need to be configured (LDAP or SAML).
 
-**Configure `kubernetes-uaa-ldap.yml` below arrording to your LDAP environment.**
+**Configure `kubernetes-uaa-ldap.yml` below according to your LDAP environment.**
 
 ```yaml
 cat <<EOF > kubernetes-uaa-ldap.yml

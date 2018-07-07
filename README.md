@@ -664,6 +664,10 @@ EC2 console will look like following:
 
 Delete the used environment.
 
+### Update CFCR
+
+* [Bump to CFCR 0.18.0](bump-to-v0.18.0.md)
+
 #### Destroy the Kubernetes
 
 Delete the Kubernetes cluster with the following command. 

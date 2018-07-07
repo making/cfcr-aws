@@ -40,8 +40,7 @@ terraform apply plan
 
 The environment as shown in the following figure should be made.
 
-![image](https://user-images.githubusercontent.com/106908/40372551-eb314806-5e1f-11e8-97df-d665b321c33a.png)
-
+![image](https://user-images.githubusercontent.com/106908/42409133-b6fc430a-8210-11e8-9970-4adcec6a4bf6.png)
 
 #### Login to Bastion server
 
@@ -139,7 +138,7 @@ Execute the script to create BOSH Director.
 
 The environment as shown in the following figure should be made.
 
-![image](https://user-images.githubusercontent.com/106908/40372434-a36b332e-5e1f-11e8-90e0-7ea768bb2b2f.png)
+![image](https://user-images.githubusercontent.com/106908/42409141-ce8ee860-8210-11e8-99c1-e57d6f8cb552.png)
 
 If you want to update the BOSH Director , you can do `git pull` in `bosh-deployment` directory and then re-run `./deploy-bosh`.
 
@@ -498,6 +497,11 @@ Succeeded
 
 If you want to updat CFCR, if there is no breaking change, you can do `git pull` int `kubo-deployment` and re-run `./deploy-kubernetes.sh`. 
 
+
+The environment as shown in the following figure should be made.
+
+![image](https://user-images.githubusercontent.com/106908/42409160-2c9ec920-8211-11e8-89cc-34b59249e11e.png)
+
 #### Deploy Addons
 
 Addons such as KubeDNS and Kubenetes Dashboard are deployed with errand. Execute the following command.
@@ -644,6 +648,9 @@ worker/ebcd08bf-eafb-403e-b0e4-c849971f4754  running        z2  10.0.9.5   i-05b
 
 Succeeded
 ```
+
+The environment as shown in the following figure should be made.
+![image](https://user-images.githubusercontent.com/106908/42409164-37fa45ba-8211-11e8-851d-051914841641.png)
 
 EC2 console will look like following:
 

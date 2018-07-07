@@ -73,10 +73,10 @@ git init
 git submodule add https://github.com/cloudfoundry/bosh-deployment.git
 git submodule add https://github.com/cloudfoundry-incubator/kubo-deployment.git
 cd kubo-deployment
-git checkout v0.17.0
+git checkout v0.18.0
 cd ..
 git add -A
-git commit -m "import CFCR v0.17.0"
+git commit -m "import CFCR v0.18.0"
 ```
 
 We will manage the difference file (ops-file) of YAML in the `ops-files` directory.
@@ -202,8 +202,8 @@ bosh upload-stemcell https://s3.amazonaws.com/bosh-aws-light-stemcells/light-bos
 
 We will create Cloud Config to set the IaaS environment on BOSH Director.
 
-We use [oficial template]((https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.17.0/configurations/aws/cloud-config.yml)) for the template of Cloud Config, 
-but because `vm_type`'s name is different from the values used in [`cfcr.yml`](https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.17.0/manifests/cfcr.yml)
+We use [oficial template]((https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.18.0/configurations/aws/cloud-config.yml)) for the template of Cloud Config, 
+but because `vm_type`'s name is different from the values used in [`cfcr.yml`](https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.18.0/manifests/cfcr.yml)
 we create ops-file to rename ...
 
 ```
@@ -347,19 +347,19 @@ Execute the following command.
 
 #### Deploy a Kubernetes cluster
 
-Deployment of Kubernetes is done based on [official manifest](https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.17.0/manifests) with the difference applied by ops-files.
+Deployment of Kubernetes is done based on [official manifest](https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.18.0/manifests) with the difference applied by ops-files.
 
-Create an ops-file to use CFCR 0.17.0.
+Create an ops-file to use CFCR 0.18.0.
 
 ```yaml
-cat <<EOF > ops-files/kubernetes-kubo-0.17.0.yml
+cat <<EOF > ops-files/kubernetes-kubo-0.18.0.yml
 - type: replace
   path: /releases/name=kubo?
   value:
     name: kubo
-    version: 0.17.0
-    url: https://bosh.io/d/github.com/cloudfoundry-incubator/kubo-release?v=0.17.0
-    sha1: 0ab676b9f6f5363377498e93487e8ba31622768e
+    version: 0.18.0
+    url: https://bosh.io/d/github.com/cloudfoundry-incubator/kubo-release?v=0.18.0
+    sha1: 23d57c0f5adf7d2bb08410288e5fdef0852160b3
 EOF
 ```
 
@@ -422,7 +422,7 @@ bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
     -o kubo-deployment/manifests/ops-files/addons-spec.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/lb.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/cloud-provider.yml \
-    -o ops-files/kubernetes-kubo-0.17.0.yml \
+    -o ops-files/kubernetes-kubo-0.18.0.yml \
     -o ops-files/kubernetes-worker.yml \
     -o ops-files/kubernetes-master-lb.yml \
     --var-file addons-spec=<(for f in `ls specs/*.yml`;do cat $f;echo;echo "---";done) \
@@ -613,7 +613,7 @@ bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
     -o kubo-deployment/manifests/ops-files/addons-spec.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/lb.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/cloud-provider.yml \
-    -o ops-files/kubernetes-kubo-0.17.0.yml \
+    -o ops-files/kubernetes-kubo-0.18.0.yml \
     -o ops-files/kubernetes-worker.yml \
     -o ops-files/kubernetes-master-lb.yml \
     --var-file addons-spec=<(for f in `ls specs/*.yml`;do cat $f;echo;echo "---";done) \

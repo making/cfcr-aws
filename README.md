@@ -20,14 +20,13 @@ Prepare `terraform.tfvars`. `access_key` and `secret_key` are for an IAM user to
 
 ```bash
 cat <<EOF > terraform.tfvars
-prefix                   = "demo"
-access_key               = "abcdef"
-secret_key               = "foobar"
-region                   = "ap-northeast-1"
-zone                     = "ap-northeast-1a"
-vpc_cidr                 = "10.0.0.0/16"
-public_subnet_ip_prefix  = "10.0.1"
-private_subnet_ip_prefix = "10.0.2"
+prefix             = "changeme"
+access_key         = "changeme"
+secret_key         = "changeme"
+region             = "ap-northeast-1"
+availability_zones = ["ap-northeast-1a","ap-northeast-1c","ap-northeast-1d"]
+vpc_cidr           = "10.0.0.0/16"
+nat_instance_type  = "t2.nano"
 EOF
 ```
 

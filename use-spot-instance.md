@@ -5,7 +5,7 @@ cat <<EOF > ops-files/cloud-config-spot-instance.yml
 - type: replace
   path: /vm_extensions?/-
   value:
-    name: spot-instance-0.0047
+    name: spot-instance-t2.micro
     cloud_properties:
       spot_bid_price: 0.0047
       spot_ondemand_fallback: true
@@ -13,7 +13,7 @@ cat <<EOF > ops-files/cloud-config-spot-instance.yml
 - type: replace
   path: /vm_extensions?/-
   value:
-    name: spot-instance-0.0183
+    name: spot-instance-t2.medium
     cloud_properties:
       spot_bid_price: 0.0183
       spot_ondemand_fallback: true
@@ -59,10 +59,10 @@ EOF
 cat <<EOF > ops-files/kubernetes-spot-instance.yml 
 - type: replace
   path: /instance_groups/name=master/vm_extensions?/-
-  value: spot-instance-0.0047
+  value: spot-instance-t2.micro
 - type: replace
   path: /instance_groups/name=worker/vm_extensions?/-
-  value: spot-instance-0.0183
+  value: spot-instance-t2.medium
 EOF
 ```
 

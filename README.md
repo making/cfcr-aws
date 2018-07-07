@@ -113,17 +113,17 @@ bosh create-env bosh-deployment/bosh.yml \
     -o kubo-deployment/configurations/generic/bosh-admin-client.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/bosh/tags.yml \
     -v director_name=bosh-aws \
-    -v internal_cidr=${private_subnet_ip_prefix}.0/24 \
-    -v internal_gw=${private_subnet_ip_prefix}.1 \
-    -v internal_ip=${private_subnet_ip_prefix}.252 \
+    -v internal_cidr=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $1}') \
+    -v internal_gw=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $1}' | sed 's|0/24|1|') \
+    -v internal_ip=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $1}' | sed 's|0/24|252|') \
     -v access_key_id=${AWS_ACCESS_KEY_ID} \
     -v secret_access_key=${AWS_SECRET_ACCESS_KEY} \
     -v region=${region} \
-    -v az=${zone} \
+    -v az=$(echo ${availability_zones} | awk -F ',' '{print $1}') \
     -v default_key_name=${default_key_name} \
     -v default_security_groups=[${default_security_groups}] \
     --var-file private_key=${HOME}/deployer.pem \
-    -v subnet_id=${private_subnet_id} \
+    -v subnet_id=$(echo ${private_subnet_ids} | awk -F ',' '{print $1}') \
     --vars-store=bosh-aws-creds.yml \
     --state bosh-aws-state.json
 EOF
@@ -135,6 +135,8 @@ Execute the script to create BOSH Director.
 ```bash
 ./deploy-bosh.sh
 ```
+
+![image](https://user-images.githubusercontent.com/106908/42380355-92610628-8168-11e8-9bcc-c0701a68b3b7.png)
 
 The environment as shown in the following figure should be made.
 
@@ -151,7 +153,7 @@ cat <<'EOF' > bosh-aws-env.sh
 export BOSH_CLIENT=admin  
 export BOSH_CLIENT_SECRET=$(bosh int ./bosh-aws-creds.yml --path /admin_password)
 export BOSH_CA_CERT=$(bosh int ./bosh-aws-creds.yml --path /director_ssl/ca)
-export BOSH_ENVIRONMENT=${private_subnet_ip_prefix}.252
+export BOSH_ENVIRONMENT=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $1}' | sed 's|0/24|252|')
 EOF
 chmod +x bosh-aws-env.sh
 ```
@@ -167,11 +169,11 @@ Confirm `bosh env` and `bosh login`.
 
 ```
 $ bosh env
-Using environment '10.0.2.252' as client 'admin'
+Using environment '10.0.8.252' as client 'admin'
 
 Name      bosh-aws  
-UUID      7feb01e4-0eee-4eae-a735-8e3183428087  
-Version   265.2.0 (00000000)  
+UUID      7ad78602-70fa-434f-a79d-d5dda6006366  
+Version   266.4.0 (00000000)  
 CPI       aws_cpi  
 Features  compiled_package_cache: disabled  
           config_server: enabled  
@@ -205,6 +207,10 @@ We will create Cloud Config to set the IaaS environment on BOSH Director.
 We use [oficial template]((https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.17.0/configurations/aws/cloud-config.yml)) for the template of Cloud Config, 
 but because `vm_type`'s name is different from the values used in [`cfcr.yml`](https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.17.0/manifests/cfcr.yml)
 we create ops-file to rename ...
+
+```
+curl -L -o ops-files/aws-ops.yml https://github.com/cloudfoundry/bosh-bootloader/raw/master/cloudconfig/aws/fixtures/aws-ops.yml
+```
 
 ```yaml
 cat <<EOF > ops-files/cloud-config-rename-vm-types.yml
@@ -250,6 +256,58 @@ cat <<EOF > ops-files/cloud-config-master-lb.yml
 EOF
 ```
 
+Enable multi-az
+
+```yaml
+cat <<EOF > ops-files/cloud-config-multi-az.yml
+- type: replace
+  path: /azs/name=z1/cloud_properties/availability_zone
+  value: ((az1_name))
+
+- type: replace
+  path: /azs/name=z2/cloud_properties/availability_zone
+  value: ((az2_name))
+
+- type: replace
+  path: /azs/name=z3/cloud_properties/availability_zone
+  value: ((az3_name))
+
+- type: replace
+  path: /networks/name=default
+  value:
+    name: default
+    subnets:
+    - az: z1
+      gateway: ((az1_gateway))
+      range: ((az1_range))
+      reserved:
+      - ((az1_gateway))/30
+      cloud_properties:
+        subnet: ((az1_subnet))
+      dns:
+      - ((dns_recursor_ip))
+    - az: z2
+      gateway: ((az2_gateway))
+      range: ((az2_range))
+      reserved:
+      - ((az2_gateway))/30
+      cloud_properties:
+        subnet: ((az2_subnet))
+      dns:
+      - ((dns_recursor_ip))
+    - az: z3
+      gateway: ((az3_gateway))
+      range: ((az3_range))
+      reserved:
+      - ((az3_gateway))/30
+      cloud_properties:
+        subnet: ((az3_subnet))
+      dns:
+      - ((dns_recursor_ip))
+    type: manual
+EOF
+```
+
 Create a script to update Cloud Config.
 
 ```bash
@@ -259,13 +317,25 @@ bosh update-cloud-config kubo-deployment/configurations/aws/cloud-config.yml \
     -o ops-files/cloud-config-rename-vm-types.yml \
     -o ops-files/cloud-config-small-vm-types.yml \
     -o ops-files/cloud-config-master-lb.yml \
-    -v az=${zone} \
+    -o ops-files/cloud-config-multi-az.yml \
     -v master_iam_instance_profile=${prefix}-cfcr-master \
     -v worker_iam_instance_profile=${prefix}-cfcr-worker \
-    -v internal_cidr=${private_subnet_ip_prefix}.0/24 \
-    -v internal_gw=${private_subnet_ip_prefix}.1 \
-    -v dns_recursor_ip=${private_subnet_ip_prefix}.1 \
-    -v subnet_id=${private_subnet_id} \
+    -v az1_name=$(echo ${availability_zones} | awk -F ',' '{print $1}') \
+    -v az1_range=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $1}') \
+    -v az1_gateway=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $1}' | sed 's|0/24|1|') \
+    -v az1_subnet=$(echo ${private_subnet_ids} | awk -F ',' '{print $1}') \
+    -v az2_name=$(echo ${availability_zones} | awk -F ',' '{print $2}') \
+    -v az2_range=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $2}') \
+    -v az2_gateway=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $2}' | sed 's|0/24|1|') \
+    -v az2_subnet=$(echo ${private_subnet_ids} | awk -F ',' '{print $2}') \
+    -v az3_name=$(echo ${availability_zones} | awk -F ',' '{print $3}') \
+    -v az3_range=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $3}') \
+    -v az3_gateway=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $3}' | sed 's|0/24|1|') \
+    -v az3_subnet=$(echo ${private_subnet_ids} | awk -F ',' '{print $3}') \
+    -v dns_recursor_ip=$(echo ${private_subnet_cidr_blocks} | awk -F ',' '{print $1}' | awk -F '.' '{print $1"."$2".0.2"}') \
+    -v access_key_id=${AWS_ACCESS_KEY_ID} \
+    -v secret_access_key=${AWS_SECRET_ACCESS_KEY} \
+    -v region=${region} \
     -v master_target_pool=${prefix}-cfcr-api
 EOF
 chmod +x update-cloud-config.sh
@@ -373,34 +443,38 @@ Execute the following command to deploy. ( You need to enter `y` halfway.)
 
 The environment as shown in the following figure should be made.
 
-![image](https://user-images.githubusercontent.com/106908/40374599-59ebcdb2-5e24-11e8-8631-af8ef0c5f39d.png)
+![image](https://user-images.githubusercontent.com/106908/42381708-e6535570-816c-11e8-8a00-a4773cf192ad.png)
 
 Run `bosh vms` and `bosh instances --ps` to see the VM list and process list.
 
 ```
 $ bosh -d cfcr vms
-Using environment '10.0.2.252' as client 'admin'
+Using environment '10.0.8.252' as client 'admin'
 
 Task 13. Done
 
 Deployment 'cfcr'
 
 Instance                                     Process State  AZ  IPs       VM CID               VM Type        Active  
-master/bc14d482-2481-4cd4-ab61-f8998959befe  running        z1  10.0.2.4  i-07b65c52ed5de9bfa  small          -  
-worker/9a57034a-99a5-48cb-9db0-59841e083a8c  running        z1  10.0.2.5  i-0cadb8a54cec35909  small-highmem  -  
+master/0c9bf70c-db82-482d-b38f-fd05dfe0819d  running        z1  10.0.8.4  i-0662d0d4a543d63ba  small          true  
+worker/d9808c82-0e18-4a45-87ce-c57b9874db2f  running        z1  10.0.8.5  i-0da422703dd4ecb8c  small-highmem  true  
+
+2 vms
+
+Succeeded
 ```
 
 ```
 $ bosh -d cfcr instances --ps
-Using environment '10.0.2.252' as client 'admin'
+Using environment '10.0.8.252' as client 'admin'
 
-Task 14. Done
+Task 12. Done
 
 Deployment 'cfcr'
 
 Instance                                           Process                  Process State  AZ  IPs  
-apply-addons/70988ada-d3b8-4015-b2a7-de93ebd21e92  -                        -              z1  -  
-master/bc14d482-2481-4cd4-ab61-f8998959befe        -                        running        z1  10.0.2.4  
+apply-addons/73dd46d1-14ba-4b1b-8bd8-488f2ea3baaf  -                        -              z1  -  
+master/0c9bf70c-db82-482d-b38f-fd05dfe0819d        -                        running        z1  10.0.8.4  
 ~                                                  bosh-dns                 running        -   -  
 ~                                                  bosh-dns-healthcheck     running        -   -  
 ~                                                  bosh-dns-resolvconf      running        -   -  
@@ -409,7 +483,7 @@ master/bc14d482-2481-4cd4-ab61-f8998959befe        -                        runn
 ~                                                  kube-apiserver           running        -   -  
 ~                                                  kube-controller-manager  running        -   -  
 ~                                                  kube-scheduler           running        -   -  
-worker/9a57034a-99a5-48cb-9db0-59841e083a8c        -                        running        z1  10.0.2.5  
+worker/d9808c82-0e18-4a45-87ce-c57b9874db2f        -                        running        z1  10.0.8.5  
 ~                                                  bosh-dns                 running        -   -  
 ~                                                  bosh-dns-healthcheck     running        -   -  
 ~                                                  bosh-dns-resolvconf      running        -   -  
@@ -419,6 +493,8 @@ worker/9a57034a-99a5-48cb-9db0-59841e083a8c        -                        runn
 ~                                                  kubelet                  running        -   -  
 
 18 instances
+
+Succeeded
 ```
 
 If you want to updat CFCR, if there is no breaking change, you can do `git pull` int `kubo-deployment` and re-run `./deploy-kubernetes.sh`. 
@@ -429,6 +505,12 @@ Addons such as KubeDNS and Kubenetes Dashboard are deployed with errand. Execute
 
 ```bash
 bosh -d cfcr run-errand apply-addons
+```
+
+#### Run smoke tests
+
+```bash
+bosh -d cfcr run-errand smoke-tests
 ```
 
 #### Login to CredHub
@@ -546,18 +628,18 @@ Run `bosh vms` to see the VM list.
 
 ```
 $ bosh -d cfcr vms
-Using environment '10.0.2.252' as client 'admin'
+Using environment '10.0.8.252' as client 'admin'
 
-Task 61. Done
+Task 18. Done
 
 Deployment 'cfcr'
 
-Instance                                     Process State  AZ  IPs       VM CID               VM Type        Active  
-master/485d11d9-6390-40d7-97dd-b6f92b3148c6  running        z2  10.0.2.7  i-0f6a5ceca5c869797  small          -  
-master/7e776fbe-ea80-499c-b1d6-9f1aa8af29bc  running        z3  10.0.2.8  i-01ef1a2a6b0e38f84  small          -  
-master/bc14d482-2481-4cd4-ab61-f8998959befe  running        z1  10.0.2.4  i-0e0c6b90f7b2ee10d  small          -  
-worker/9a57034a-99a5-48cb-9db0-59841e083a8c  running        z1  10.0.2.5  i-03d3204bfe5f4ba1f  small-highmem  -  
-worker/ac71f182-ce0b-4c6d-8811-2605c3248121  running        z2  10.0.2.9  i-0412554a975042d05  small-highmem  -  
+Instance                                     Process State  AZ  IPs        VM CID               VM Type        Active  
+master/0c9bf70c-db82-482d-b38f-fd05dfe0819d  running        z1  10.0.8.4   i-0662d0d4a543d63ba  small          true  
+master/517f31c1-d1a5-438d-b508-a0c45f0be822  running        z2  10.0.9.4   i-05acda1e48ce5da70  small          true  
+master/d88a8853-d92e-4746-b7a4-c3e36fe741fd  running        z3  10.0.10.4  i-0e22869ccc18676c1  small          true  
+worker/d9808c82-0e18-4a45-87ce-c57b9874db2f  running        z1  10.0.8.5   i-0da422703dd4ecb8c  small-highmem  true  
+worker/ebcd08bf-eafb-403e-b0e4-c849971f4754  running        z2  10.0.9.5   i-05bb0c65aca895cb9  small-highmem  true  
 
 5 vms
 
@@ -566,7 +648,7 @@ Succeeded
 
 EC2 console will look like following:
 
-![image](https://user-images.githubusercontent.com/106908/40799521-c1c855c4-6548-11e8-9745-4abadb9680b4.png)
+![image](https://user-images.githubusercontent.com/106908/42382726-2926b48e-8170-11e8-9131-5c70d718caba.png)
 
 ### Enable UAA integration
 

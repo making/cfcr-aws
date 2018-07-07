@@ -10,23 +10,13 @@ variable "secret_key" {
     type = "string"
 }
 
-variable "zone" {
-    type = "string"
+variable "availability_zones" {
+  type = "list"
 }
 
 variable "vpc_cidr" {
     type    = "string"
     default = "10.0.0.0/16"
-}
-
-variable "public_subnet_ip_prefix" {
-    type = "string"
-    default = "10.0.1"
-}
-
-variable "private_subnet_ip_prefix" {
-    type = "string"
-    default = "10.0.2"
 }
 
 variable "prefix" {
@@ -39,10 +29,23 @@ variable "kubernetes_master_port" {
     default = "8443"
 }
 
+variable "nat_instance_type" {
+    default = "t2.micro"
+}
+
+variable "bastion_instance_type" {
+    default = "t2.micro"
+}
+
 provider "aws" {
     access_key = "${var.access_key}"
     secret_key = "${var.secret_key}"
     region = "${var.region}"
+}
+
+locals {
+    public_cidr  = "${cidrsubnet(var.vpc_cidr, 6, 1)}"
+    private_cidr = "${cidrsubnet(var.vpc_cidr, 6, 2)}"
 }
 
 resource "aws_vpc" "vpc" {
@@ -73,12 +76,13 @@ resource "aws_internet_gateway" "gateway" {
 }
 
 resource "aws_subnet" "public" {
+    count      = "${length(var.availability_zones)}"
     vpc_id     = "${aws_vpc.vpc.id}"
-    cidr_block = "${var.public_subnet_ip_prefix}.0/24"
-    availability_zone = "${var.zone}"
-
+    cidr_block = "${cidrsubnet(local.public_cidr, 2, count.index)}"
+    availability_zone = "${element(var.availability_zones, count.index)}"
+    
     tags {
-      Name = "${var.prefix}-cfcr-public"
+      Name = "${var.prefix}-cfcr-public-${count.index}"
       KubernetesCluster = "${random_id.kubernetes-cluster-tag.b64}"
     }
 }
@@ -97,31 +101,56 @@ resource "aws_route_table" "public" {
 }
 
 resource "aws_route_table_association" "public" {
-    subnet_id      = "${aws_subnet.public.id}"
+    count          = "${length(var.availability_zones)}"
+    subnet_id      = "${element(aws_subnet.public.*.id, count.index)}"
     route_table_id = "${aws_route_table.public.id}"
 }
 
-resource "aws_eip" "nat" {
+variable "nat_ami_map" {
+    type = "map"
+
+    default = {
+      us-east-1      = "ami-303b1458"
+      us-east-2      = "ami-4e8fa32b"
+      us-west-1      = "ami-7da94839"
+      us-west-2      = "ami-69ae8259"
+      eu-west-1      = "ami-6975eb1e"
+      eu-central-1   = "ami-46073a5b"
+      ap-southeast-1 = "ami-b49dace6"
+      ap-southeast-2 = "ami-e7ee9edd"
+      ap-northeast-1 = "ami-03cf3903"
+      ap-northeast-2 = "ami-8e0fa6e0"
+      sa-east-1      = "ami-fbfa41e6"
+    }
 }
 
-resource "aws_nat_gateway" "nat" {
-    allocation_id = "${aws_eip.nat.id}"
-    subnet_id     = "${aws_subnet.public.id}"
-}
-
-
-resource "aws_subnet" "private" {
-    vpc_id     = "${aws_vpc.vpc.id}"
-    cidr_block = "${var.private_subnet_ip_prefix}.0/24"
-    availability_zone = "${var.zone}"
+resource "aws_instance" "nat" {
+    ami                    = "${lookup(var.nat_ami_map, var.region)}"
+    instance_type          = "${var.nat_instance_type}"
+    vpc_security_group_ids = ["${aws_security_group.nat.id}"]
+    source_dest_check      = false
+    subnet_id              = "${aws_subnet.public.0.id}"
+    associate_public_ip_address = true
 
     tags {
-      Name = "${var.prefix}-cfcr-private"
+      Name = "${var.prefix}-nat"
+    }
+}
+
+resource "aws_subnet" "private" {
+    count      = "${length(var.availability_zones)}"
+    vpc_id     = "${aws_vpc.vpc.id}"
+    cidr_block = "${cidrsubnet(local.private_cidr, 2, count.index)}"
+    availability_zone = "${element(var.availability_zones, count.index)}"
+
+    tags {
+      Name = "${var.prefix}-cfcr-private-${count.index}"
       KubernetesCluster = "${random_id.kubernetes-cluster-tag.b64}"
     }
 }
 
 resource "aws_route_table" "private" {
+    count  = "${length(var.availability_zones)}"
     vpc_id = "${aws_vpc.vpc.id}"
 
     tags {
@@ -130,18 +159,39 @@ resource "aws_route_table" "private" {
 
     route {
       cidr_block = "0.0.0.0/0"
-      gateway_id = "${aws_nat_gateway.nat.id}"
+      instance_id = "${aws_instance.nat.id}"
     }
 }
 
 resource "aws_route_table_association" "private" {
-    subnet_id      = "${aws_subnet.private.id}"
-    route_table_id = "${aws_route_table.private.id}"
+    count          = "${length(var.availability_zones)}"
+    subnet_id      = "${element(aws_subnet.private.*.id, count.index)}"
+    route_table_id = "${element(aws_route_table.private.*.id, count.index)}"
 }
 
 resource "aws_security_group" "nodes" {
     name        = "${var.prefix}-node-access"
     vpc_id      = "${aws_vpc.vpc.id}"
+}
+
+resource "aws_security_group" "nat" {
+    name        = "${var.prefix}-nat-access"
+    description = "NAT Security Group"
+    vpc_id      = "${aws_vpc.vpc.id}"
+
+    ingress {
+      cidr_blocks = ["${var.vpc_cidr}"]
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+    }
+
+    egress {
+      cidr_blocks = ["0.0.0.0/0"]
+      protocol    = "-1"
+      from_port   = 0
+      to_port     = 0
+    }
 }
 
 resource "aws_security_group_rule" "outbound" {
@@ -205,7 +255,7 @@ resource "aws_security_group" "api" {
 
 resource "aws_elb" "api" {
     name               = "${var.prefix}-cfcr-api"
-    subnets = ["${aws_subnet.public.id}"]
+    subnets = ["${aws_subnet.public.*.id}"]
     security_groups = ["${aws_security_group.api.id}"]
 
     listener {
@@ -216,9 +266,9 @@ resource "aws_elb" "api" {
     }
 
     health_check {
-      healthy_threshold   = 2
-      unhealthy_threshold = 2
-      timeout             = 2
+      healthy_threshold   = 6
+      unhealthy_threshold = 3
+      timeout             = 3
       target              = "TCP:${var.kubernetes_master_port}"
       interval            = 5
     }
@@ -490,9 +540,9 @@ resource "aws_iam_user_policy_attachment" "bosh-director" {
 
 resource "aws_instance" "bastion" {
     ami           = "${data.aws_ami.ubuntu.id}"
-    instance_type = "t2.micro"
-    subnet_id     = "${aws_subnet.public.id}"
-    availability_zone = "${var.zone}"
+    instance_type = "${var.bastion_instance_type}"
+    subnet_id     = "${aws_subnet.public.0.id}"
+    availability_zone = "${var.availability_zones[0]}"
     key_name      = "${aws_key_pair.deployer.key_name}"
     vpc_security_group_ids = ["${aws_security_group.nodes.id}"]
     associate_public_ip_address = true
@@ -515,16 +565,18 @@ resource "aws_instance" "bastion" {
         "sudo unzip terraform*.zip -d /usr/local/bin",
         "sudo sh -c 'sudo cat > /etc/profile.d/bosh.sh <<'EOF'",
         "#!/bin/bash",
-        "export private_subnet_id=${aws_subnet.private.id}",
-        "export public_subnet_id=${aws_subnet.public.id}",
+        "export private_subnet_ids=${join(",",aws_subnet.private.*.id)}",
+        "export public_subnet_ids=${join(",",aws_subnet.public.*.id)}",
+        "export private_subnet_cidr_blocks=${join(",",aws_subnet.private.*.cidr_block)}",
+        "export public_subnet_cidr_blocks=${join(",",aws_subnet.public.*.cidr_block)}",
+        "export public_subnet_ids=${join(",",aws_subnet.public.*.id)}",
         "export vpc_cidr=${var.vpc_cidr}",
         "export vpc_id=${aws_vpc.vpc.id}",
         "export default_security_groups=${aws_security_group.nodes.id}",
-        "export private_subnet_ip_prefix=${var.private_subnet_ip_prefix}",
         "export prefix=${var.prefix}",
         "export default_key_name=${aws_key_pair.deployer.key_name}",
         "export region=${var.region}",
-        "export zone=${var.zone}",
+        "export availability_zones=${join(",", var.availability_zones)}",
         "export kubernetes_cluster_tag=${random_id.kubernetes-cluster-tag.b64}",
         "export master_lb_ip_address=${aws_elb.api.dns_name}",
         "export AWS_ACCESS_KEY_ID=${aws_iam_access_key.bosh-director.id}",
@@ -566,8 +618,13 @@ resource "aws_instance" "bastion" {
     }
 }
 
+resource "aws_eip" "bastion" {
+    instance = "${aws_instance.bastion.id}"
+    vpc      = true
+}
+
 output "bosh_bastion_ip" {
-    value = "${aws_instance.bastion.public_ip}"
+    value = "${aws_eip.bastion.public_ip}"
 }
 
 output "cfcr_master_target_pool" {

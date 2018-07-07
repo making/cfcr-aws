@@ -496,7 +496,11 @@ resource "aws_iam_policy" "bosh-director" {
                 "ec2:RegisterImage",
                 "ec2:DeregisterImage",
                 "elasticloadbalancing:*",
-                "sts:DecodeAuthorizationMessage"
+                "sts:DecodeAuthorizationMessage",
+                "ec2:RequestSpotInstances",
+                "ec2:DescribeSpotInstanceRequests",
+                "ec2:CancelSpotInstanceRequests",
+                "iam:CreateServiceLinkedRole"
             ],
             "Effect": "Allow",
             "Resource": "*"

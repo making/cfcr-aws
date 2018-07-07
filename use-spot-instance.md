@@ -20,8 +20,8 @@ cat <<EOF > ops-files/cloud-config-spot-instance.yml
 EOF
 ```
 
-```
-cat <<EOF > update-cloud-config.sh 
+```bash
+cat <<'EOF' > update-cloud-config.sh 
 #!/bin/bash
 bosh update-cloud-config kubo-deployment/configurations/aws/cloud-config.yml \
     -o ops-files/cloud-config-rename-vm-types.yml \
@@ -66,8 +66,8 @@ cat <<EOF > ops-files/kubernetes-spot-instance.yml
 EOF
 ```
 
-```yaml
-cat <<EOF > deploy-kubernetes.sh 
+```bash
+cat <<'EOF' > deploy-kubernetes.sh 
 #!/bin/bash
 bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
     -o kubo-deployment/manifests/ops-files/misc/single-master.yml \
@@ -83,4 +83,8 @@ bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
     -v kubernetes_master_host=${master_lb_ip_address} \
     --no-redact
 EOF
+```
+
+```bash
+./deploy-kubernetes.sh 
 ```

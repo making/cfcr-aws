@@ -28,6 +28,7 @@ bosh create-env bosh-deployment/bosh.yml \
     -o bosh-deployment/jumpbox-user.yml \
     -o bosh-deployment/local-dns.yml \
     -o ops-files/director-size-aws.yml \
+    -o ops-files/director-spot-instance.yml \
     -o ops-files/director-disk-size.yml \
     -o kubo-deployment/configurations/generic/dns-addresses.yml \
     -o kubo-deployment/configurations/generic/bosh-admin-client.yml \

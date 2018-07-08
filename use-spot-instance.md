@@ -1,6 +1,9 @@
 ## Use Spot Insatnce
 
-### Director
+### Director(Optional)
+
+> ⚠️ If the director has been stopped due to the rise of the bid price, you need to restart it manually.
+
 
 ```yaml
 cat <<EOF > ops-files/director-spot-instance.yml

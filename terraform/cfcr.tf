@@ -194,6 +194,26 @@ resource "aws_security_group" "nat" {
     }
 }
 
+resource "aws_security_group" "vms_security_group" {
+  name        = "${var.prefix}-bosh-vms"
+  description = "VMs Security Group"
+  vpc_id      = "${aws_vpc.vpc.id}"
+
+  ingress {
+    cidr_blocks = ["${var.vpc_cidr}"]
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+  }
+
+  egress {
+    cidr_blocks = ["0.0.0.0/0"]
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+  }
+}
+
 resource "aws_security_group_rule" "outbound" {
     type            = "egress"
     from_port       = 0
@@ -576,7 +596,7 @@ resource "aws_instance" "bastion" {
         "export public_subnet_ids=${join(",",aws_subnet.public.*.id)}",
         "export vpc_cidr=${var.vpc_cidr}",
         "export vpc_id=${aws_vpc.vpc.id}",
-        "export default_security_groups=${aws_security_group.nodes.id}",
+        "export default_security_groups=${aws_security_group.vms_security_group.id}",
         "export prefix=${var.prefix}",
         "export default_key_name=${aws_key_pair.deployer.key_name}",
         "export region=${var.region}",

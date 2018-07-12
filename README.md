@@ -206,10 +206,6 @@ We use [oficial template]((https://github.com/cloudfoundry-incubator/kubo-deploy
 but because `vm_type`'s name is different from the values used in [`cfcr.yml`](https://github.com/cloudfoundry-incubator/kubo-deployment/blob/v0.18.0/manifests/cfcr.yml)
 we create ops-file to rename ...
 
-```
-curl -L -o ops-files/aws-ops.yml https://github.com/cloudfoundry/bosh-bootloader/raw/master/cloudconfig/aws/fixtures/aws-ops.yml
-```
-
 ```yaml
 cat <<EOF > ops-files/cloud-config-rename-vm-types.yml
 - type: replace

@@ -127,6 +127,17 @@ EOF
 ```
 
 ```yaml
+cat <<EOF > ops-files/kubernetes-standard-disk.yml
+- type: replace
+  path: /instance_groups/name=master/vm_extensions?/-
+  value: standard-disk
+- type: replace
+  path: /instance_groups/name=worker/vm_extensions?/-
+  value: standard-disk
+EOF
+```
+
+```yaml
 cat <<EOF > ops-files/kubernetes-persistent-disk-type.yml
 - type: remove
   path: /instance_groups/name=master/persistent_disk?

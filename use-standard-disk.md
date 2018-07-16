@@ -7,7 +7,7 @@ cat <<EOF > ops-files/director-disk-size.yml
 - type: replace
   path: /resource_pools/name=vms/cloud_properties/ephemeral_disk
   value: 
-    value: 20_000
+    size: 20_000
     type: standard
 - type: replace
   path: /disk_pools/name=disks/cloud_properties/type?

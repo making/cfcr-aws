@@ -71,6 +71,53 @@ EOF
 ```
 
 ```yaml
+cat <<EOF > ops-files/cloud-config-ephemeral-disk.yml 
+- type: replace
+  path: /vm_extensions/name=1GB_ephemeral_disk?
+  value:
+    name: 1GB_ephemeral_disk
+    cloud_properties:
+      ephemeral_disk:
+        size: 1024
+- type: replace
+  path: /vm_extensions/name=5GB_ephemeral_disk?
+  value:
+    name: 5GB_ephemeral_disk
+    cloud_properties:
+      ephemeral_disk:
+        size: 5120
+- type: replace
+  path: /vm_extensions/name=10GB_ephemeral_disk?
+  value:
+    name: 10GB_ephemeral_disk
+    cloud_properties:
+      ephemeral_disk:
+        size: 10240
+- type: replace
+  path: /vm_extensions/name=50GB_ephemeral_disk?
+  value:
+    name: 50GB_ephemeral_disk
+    cloud_properties:
+      ephemeral_disk:
+        size: 51200
+- type: replace
+  path: /vm_extensions/name=100GB_ephemeral_disk?
+  value:
+    name: 100GB_ephemeral_disk
+    cloud_properties:
+      ephemeral_disk:
+        size: 102400
+- type: replace
+  path: /vm_extensions/name=500GB_ephemeral_disk?
+  value:
+    name: 500GB_ephemeral_disk
+    cloud_properties:
+      ephemeral_disk:
+        size: 512000
+EOF
+```
+
+```yaml
 cat <<EOF > ops-files/cloud-config-disk-types.yml
 - type: replace
   path: /disk_types?/-
@@ -100,6 +147,7 @@ bosh update-cloud-config kubo-deployment/configurations/aws/cloud-config.yml \
     -o ops-files/cloud-config-spot-instance.yml \
     -o ops-files/cloud-config-standard-disk.yml \
     -o ops-files/cloud-config-disk-types.yml \
+    -o ops-files/cloud-config-ephemeral-disk.yml \
     -v master_iam_instance_profile=${prefix}-cfcr-master \
     -v worker_iam_instance_profile=${prefix}-cfcr-worker \
     -v az1_name=$(echo ${availability_zones} | awk -F ',' '{print $1}') \
@@ -134,6 +182,9 @@ cat <<EOF > ops-files/kubernetes-standard-disk.yml
 - type: replace
   path: /instance_groups/name=worker/vm_extensions?/-
   value: standard-disk
+- type: replace
+  path: /instance_groups/name=worker/vm_extensions?/-
+  value: 50GB_ephemeral_disk
 EOF
 ```
 

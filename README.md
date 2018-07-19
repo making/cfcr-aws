@@ -656,6 +656,10 @@ EC2 console will look like following:
 
 [Enable UAA](enable-uaa.md)
 
+### Update CFCR
+
+* [Bump to CFCR 0.19.0](bump-to-v0.19.0.md)
+
 ### Destroy CFCR
 
 Delete the used environment.

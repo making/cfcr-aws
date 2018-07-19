@@ -1,4 +1,4 @@
-### Bump to CFCF 0.18.0
+### Bump to CFCF 0.19.0
 
 Login to Bastion server.
 
@@ -13,23 +13,23 @@ cd cfcr-manifests
 source bosh-aws-env.sh
 ```
 
-Fetch v0.18.0 manifests.
+Fetch v0.19.0 manifests.
 
 ```
 cd kubo-deployment
 git fetch origin --tag
-git checkout v0.18.0
+git checkout v0.19.0
 cd ..
 ```
 
-Update stemcells for CFCR v0.18.0.
+Update stemcells for CFCR v0.19.0.
 
 ```
 STEMCELL_VERSION=$(bosh int kubo-deployment/manifests/cfcr.yml --path /stemcells/0/version)
 bosh upload-stemcell https://s3.amazonaws.com/bosh-aws-light-stemcells/light-bosh-stemcell-${STEMCELL_VERSION}-aws-xen-hvm-ubuntu-trusty-go_agent.tgz
 ```
 
-Create a ops-file for CFCR v0.18.0.
+Create a ops-file for CFCR v0.19.0.
 
 ```yaml
 cat <<EOF > ops-files/kubernetes-kubo-0.19.0.yml

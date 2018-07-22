@@ -34,7 +34,11 @@ variable "lb_protocol" {
     default = "tcp"
 }
 
-variable "ssl_certificate_id" {
+variable "use_alb" {
+    default = false
+}
+
+variable "ssl_cert_arn" {
     type = "string"
     default = ""
 }

@@ -64,7 +64,7 @@ resource "aws_instance" "bastion" {
         "export region=${var.region}",
         "export availability_zones=${join(",", var.availability_zones)}",
         "export kubernetes_cluster_tag=${random_id.kubernetes-cluster-tag.b64}",
-        "export master_lb_ip_address=${aws_elb.api.dns_name}",
+        "export master_lb_ip_address=${var.use_alb? aws_lb.front_end.dns_name : aws_elb.api.dns_name}",
         "export AWS_ACCESS_KEY_ID=${aws_iam_access_key.bosh-director.id}",
         "export AWS_SECRET_ACCESS_KEY=${aws_iam_access_key.bosh-director.secret}",
         "EOF'",

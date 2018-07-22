@@ -250,6 +250,20 @@ cat <<EOF > ops-files/cloud-config-master-lb.yml
 EOF
 ```
 
+If you use an ALB instead of a classic ELB,
+
+```yaml
+cat <<EOF > ops-files/cloud-config-master-lb.yml
+- type: replace
+  path: /vm_extensions?/-
+  value:
+    name: master-lb
+    cloud_properties:
+      lb_target_groups:
+      - ((master_target_pool))
+EOF
+```
+
 Enable multi-az
 
 ```yaml

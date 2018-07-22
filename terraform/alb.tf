@@ -15,7 +15,11 @@ resource "aws_lb_target_group" "cfcr_api" {
     protocol = "HTTPS"
     path = "/healthz"
     port = 8443
-    matcher = "200"
+    matcher = "200"    
+    healthy_threshold   = 6
+    unhealthy_threshold = 3
+    timeout             = 3
+    interval            = 5
   }
 }
 

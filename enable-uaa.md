@@ -257,7 +257,7 @@ bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
     -o kubo-deployment/manifests/ops-files/addons-spec.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/lb.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/cloud-provider.yml \
-    -o ops-files/kubernetes-kubo-0.17.0.yml \
+    -o ops-files/kubernetes-kubo-0.19.0.yml \
     -o ops-files/kubernetes-worker.yml \
     -o ops-files/kubernetes-master-lb.yml \
     -o ops-files/kubernetes-uaa.yml \
@@ -430,7 +430,7 @@ bosh deploy -d cfcr kubo-deployment/manifests/cfcr.yml \
     -o kubo-deployment/manifests/ops-files/addons-spec.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/lb.yml \
     -o kubo-deployment/manifests/ops-files/iaas/aws/cloud-provider.yml \
-    -o ops-files/kubernetes-kubo-0.17.0.yml \
+    -o ops-files/kubernetes-kubo-0.19.0.yml \
     -o ops-files/kubernetes-worker.yml \
     -o ops-files/kubernetes-master-lb.yml \
     -o ops-files/kubernetes-uaa.yml \

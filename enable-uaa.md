@@ -27,9 +27,9 @@ cat <<EOF > ops-files/kubernetes-uaa.yml
   path: /releases/-
   value:
     name: uaa
-    version: "57.4"
-    url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=57.4
-    sha1: f8a5f456f0883f85ca17db41414458d318204882
+    version: "60.2"
+    url: https://bosh.io/d/github.com/cloudfoundry/uaa-release?v=60.2
+    sha1: 667af417997467681fddf13c78e5a11c6f4a9d15
 - type: replace
   path: /releases/-
   value:

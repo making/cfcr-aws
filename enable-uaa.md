@@ -35,7 +35,7 @@ cat <<EOF > ops-files/kubernetes-uaa.yml
   value:
     name: postgres
     version: 29
-    url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=28
+    url: https://bosh.io/d/github.com/cloudfoundry/postgres-release?v=29
     sha1: 24d2e2887a45258b71bc40577c0f406180e47701
 
 # Add UAA DB (postgresql)
